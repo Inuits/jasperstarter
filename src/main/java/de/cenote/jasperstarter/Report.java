@@ -31,8 +31,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -92,6 +92,7 @@ import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 import net.sf.jasperreports.view.JasperViewer;
 
 import org.apache.commons.lang.LocaleUtils;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -492,9 +493,9 @@ public class Report {
                     // ParameterPanel.java
                     if (Date.class
                             .equals(reportParam.getValueClass())) {
-                        // Date must be in ISO8601 format. Example 2012-12-31
-                        DateFormat dateFormat = new SimpleDateFormat("yy-MM-dd");
-                        parameters.put(paramName, (Date) dateFormat.parse(paramValue));
+                        // Date must be in ISO8601 format. Example 2012-12-31T13:48:23+00:00
+                        DateTime datetime = new DateTime(paramValue);
+                        parameters.put(paramName, datetime.toDate());
                     } else if (Image.class
                             .equals(reportParam.getValueClass())) {
                         Image image =
@@ -509,6 +510,9 @@ public class Report {
                                     "Image tracker error: " + e.getMessage(), e);
                         }
                         parameters.put(paramName, image);
+                    } else if (TimeZone.class
+                            .equals(reportParam.getValueClass())) {
+                        parameters.put(paramName, TimeZone.getTimeZone(paramValue));
                     } else if (Locale.class
                             .equals(reportParam.getValueClass())) {
                         parameters.put(paramName, LocaleUtils.toLocale(paramValue));
@@ -548,8 +552,6 @@ public class Report {
                     }
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("NumberFormatException: " + e.getMessage() + "\" in \"" + p + "\"", e);
-                } catch (java.text.ParseException e) {
-                    throw new IllegalArgumentException(e.getMessage() + "\" in \"" + p + "\"", e);
                 } catch (JRException e) {
                     throw new IllegalArgumentException("Unable to load image from: " + paramValue, e);
                 }
